@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <link href="styles.css" rel="stylesheet">
+        <title>Patrick's Webpage</title>
+    </head>
+    <body>
+
+
+
+        <div class="header">
+            <h1>This is Patrick's Pong!</h1>
+        </div>
+        <div class="topnav">
+            <a class="active" href="index.html">Home</a>
+            <a href="contact.html">Contact</a>
+          </div>
+
+        <div class = "main-central">
+            <h2>Pong!</h2>
+            <br></br>
+            Press W and S to control paddle!
+            <br>
+
+            <div class = "score">
+              <div id = "player-score">Player score: 0</div>
+              <div id = "opponent-score">Opponent score: 0</div>
+              <div id = "click-text">Click on the canvas to play!</div>
+            </div>
+
+          </br>
+
+            <canvas id="myCanvas" width="800" height="600" style="border:1px solid #000000;"></canvas>
+<script>
+
+//Here starts PONG! script
+const canvas = document.getElementById("myCanvas")
+let pen = canvas.getContext("2d")
+let event = window.event;
+let playerY = 250
+let opponentY = 250
+let keyPressed = ""
+let moveSpeed = 0;
+
+let onPlay = false;
+
+let ballX = 100;
+let ballY = 300;
+
+let startingBallSpeed = 8;
+let ballXspeed = 0;
+let ballYspeed = 0;
+
+let playerScore = 0;
+let opponentScore = 0;
+let opponentScoreText = document.getElementById("opponent-score");
+let playerScoreText = document.getElementById("player-score");
+
+let clickText = document.getElementById("click-text");
+
+
+document.addEventListener('keypress', (event) => {
+  keyPressed = event.key;
+  playerInput(keyPressed);
+}, false);
+
+document.addEventListener('click', (event) => {
+  if(onPlay == false){
+    startGame();
+  }
+}, false);
+
+
+//Frame rate for screen
+setInterval(screenUpdate, 30)
+//Update rate for AI controller bar
+setInterval(opponentAI, 60)
+
+
+//These functions run every frame
+function screenUpdate()
+{
+  cleanScreen()
+  drawBarriers()
+  drawPlayerBar(playerY)
+  drawOpponentBar(opponentY)
+  updateBallPosition()
+  if (ballX > 800 || ballX < 0)
+  {
+  resetGame()
+  }
+  drawBall()
+
+}
+
+function startGame()
+{
+
+  setTimeout(function(){
+        ballX = 100;
+        ballY = 300;
+  }, 1000)
+
+  onPlay = true;
+  moveSpeed = 10;
+  ballXspeed = startingBallSpeed;
+  ballYspeed = 5;
+  clickText.innerHTML = "";
+  wait(1000);
+
+}
+
+function resetGame()
+{
+
+  if (ballX < 0)
+      {
+        opponentScore += 1;
+        opponentScoreText.innerHTML = "Opponent score: " + opponentScore;
+        ballX = 100;
+        ballY = 300;
+        ballXspeed = startingBallSpeed;
+      }
+      if (ballX > 800)
+      {
+        playerScore += 1;
+        playerScoreText.innerHTML = "Player score: " + playerScore;
+        ballX = 700;
+        ballY = 300;
+        ballXspeed = -startingBallSpeed;
+      }
+      wait(1000);
+  opponentY = 250;
+}
+
+function wait(ms){
+   var start = new Date().getTime();
+   var end = start;
+   while(end < start + ms) {
+     end = new Date().getTime();
+     //I copied this bit of code from the user Mic at https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
+     //The default SetTimeout was not behaving as expected in this situation
+  }
+}
+
+
+function opponentAI()
+{
+  if (ballXspeed>0)
+    {
+      if (ballY > opponentY)
+        {
+          if (opponentY < 490)
+          {
+            opponentY = opponentY + moveSpeed;
+          }
+        }
+
+    if (ballY < opponentY)
+      {
+        if (opponentY > 10)
+        {
+            opponentY = opponentY - moveSpeed;
+        }
+      }
+    }
+
+
+
+}
+
+function drawBall()
+{
+        pen.fillStyle = 'black';
+        pen.beginPath();
+        pen.arc(ballX, ballY, 10, 0, 2 * 3.14);
+        pen.fill();
+
+}
+
+function updateBallPosition()
+{
+
+  if (ballY >= 590 || ballY <= 10)
+    {
+      ballYspeed = ballYspeed * -1
+      //BARRIER COLLISION
+    }
+
+  var ballDistanceToPlayer = Math.abs((ballY) - (playerY + 50));
+  var ballDistanceToOpponent = Math.abs((ballY) - (opponentY + 50));
+
+  if (ballX <= 35 && ballDistanceToPlayer < 55 && ballXspeed < 0)
+    {
+      ballXspeed = ballXspeed * -1;
+      ballXspeed = ballXspeed + 0.5;
+      //PLAYER BAR COLLISION
+    }
+
+    if (ballX >= 765 && ballDistanceToOpponent < 55 && ballXspeed > 0)
+    {
+      ballXspeed = ballXspeed * -1;
+      ballXspeed = ballXspeed - 0.5;
+      //OPPONENT BAR COLLISION
+    }
+
+
+  ballX = ballX + ballXspeed
+  ballY = ballY + ballYspeed
+
+}
+
+
+function drawBarriers()
+{
+  pen.fillStyle = 'black'
+  pen.fillRect(0,0,800,10)
+  pen.fillRect(0,590,800,10)
+
+}
+
+function playerInput(keyPressed)
+{
+
+  if (keyPressed == "w" || keyPressed == '38')
+    {
+      if (playerY > 10){
+          playerY = playerY - moveSpeed;
+         //event.preventDefault();
+        }
+    }
+    if (keyPressed == "s" || keyPressed == '40')
+    {
+      if (playerY < 490){
+        playerY = playerY + moveSpeed;
+        // event.preventDefault();
+      }
+    }
+
+
+}
+
+
+function cleanScreen()
+{
+  pen.fillStyle = 'white'
+  pen.fillRect(0,0, 800, 600)
+
+}
+
+function drawPlayerBar(Y)
+{
+  pen.fillStyle = 'black'
+  pen.fillRect(5,Y,30,100)
+}
+
+function drawOpponentBar(Y)
+{
+  pen.fillStyle = 'black'
+  pen.fillRect(765,Y,30,100)
+}
+</script>
+
+
+            <br></br>
+
+
+
+        <div class = "pong-text">My first ever "pure programming" exercise was making a little Pong game in Python with Pygame. I've decided to try my hand at trying to remake the same thing in Javascript with it's canvas function!</div>
+        </div>
+
+        <div class = "buttons">
+          <a href="index.html" >
+            <button type="button" class="btn btn-warning">Home</button>
+         </a>
+          <a href="music.html" >
+              <button type="button" class="btn btn-warning">Music</button>
+           </a>
+           <a href="games.html" >
+              <button type="button" class="btn btn-warning">Games</button>
+           </a>
+           <a href="contact.html" >
+              <button type="button" class="btn btn-warning">Contact</button>
+           </a>
+      </div>
+
+        <hr>
+        <div class = "biography">
+            <div class = "top-text">Biography</div>
+            <div class = "photo">
+            <img src="2.jpg" class="img-fluid">
+            </div>
+            <div class = "biography-text">
+
+            I'm Patrick Stefano. I was born and live in Curitiba - Brazil and I'm a recent music graduate from the Federal University from Paraná.
+             I've been a huge computer nerd since always so learning to code feels like the most natural thing. I love games and at first starting learning programming so that I could make my own games, I ended up really liking it and want to build a career out of code!
+            </div>
+        </div>
+        <div class ="closer">
+
+            Made by @ptkstefano 2022
+
+        </div>
+
+
+
+    </body>
+</html>
